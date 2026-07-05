@@ -5,4 +5,4 @@ dist/
 data/*.db
 data/*.sqlite
 coverage/
-
+.test-data/
