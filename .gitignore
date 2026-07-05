@@ -6,3 +6,5 @@ data/*.db
 data/*.sqlite
 coverage/
 .test-data/
+tmp/
+output/
