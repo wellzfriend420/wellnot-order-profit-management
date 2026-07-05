@@ -13,8 +13,9 @@
 ## コンテキストと構成
 
 ```text
-ブラウザ ─ HTTP/API ─ アプリケーション ─ 業務ルール
-                         ├─ SQLite (DB-0003)
+PC/スマホ/タブレット ─ HTTPS共有URL ─ Render Web Service ─ 業務ルール
+                                           ├─ Persistent Disk上のSQLite (DB-0003)
+                                           ├─ Google Drive日次バックアップ
                          ├─ PDF用印刷HTML
                          └─ Excelテンプレートアダプター
 ```
@@ -41,12 +42,9 @@
 
 ## 運用・復旧
 
-SQLiteファイルは日次バックアップ対象とし、復元後に整合性検査と件数照合を行う。認証失敗、権限違反、ロック解除、削除、帳票出力を監査する。詳細は `docs/operations/recovery-plan.md`。
+本番SQLiteは `/var/data/wellnot/wellnot.sqlite` に固定し、永続ディスクへ保存する。1インスタンスで稼働し、SQLiteオンラインバックアップAPIで作った整合コピーをGoogle Driveへ日次保存する。認証失敗、権限違反、ロック解除、削除、帳票出力、手動バックアップを監査する。詳細は `docs/operations/production-deployment.md` と `docs/operations/recovery-plan.md`。
 
 ## 未決事項
 
-- 現行Excel原本のセル位置
-- 本番認証基盤と配備先
 - 原価・監査データの保持期間
 - 工数の時間単価および粗利計算上の扱い
-

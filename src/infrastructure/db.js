@@ -3,11 +3,13 @@ import { readFileSync, mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { hashPassword } from './auth.js';
+import { runtimeConfig } from './runtime-config.js';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
-const file = process.env.DATABASE_PATH ?? resolve(root, 'data/wellnot.sqlite');
+const file = runtimeConfig.databasePath;
 mkdirSync(dirname(file), { recursive: true });
 export const db = new DatabaseSync(file);
+db.exec('PRAGMA foreign_keys=ON; PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL; PRAGMA busy_timeout=5000;');
 db.exec(readFileSync(resolve(root, 'src/infrastructure/schema.sql'), 'utf8'));
 
 const now = () => new Date().toISOString();
@@ -32,5 +34,4 @@ export function audit(actor, action, entityType, entityId, details = {}) {
   db.prepare('INSERT INTO audit_logs(actor_user_id,action,entity_type,entity_id,details_json,created_at) VALUES(?,?,?,?,?,?)')
     .run(actor?.id ?? null, action, entityType, entityId == null ? null : String(entityId), JSON.stringify(details), now());
 }
-export { now };
-
+export { now, file as databasePath };

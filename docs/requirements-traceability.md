@@ -20,6 +20,9 @@
 | 工程ガント | 初期2か月、月送り、横スクロール、案件リンク、モノクロ模様、A3実測 | PDF検証済み・実機印刷待ち |
 | Excel期間区分・履歴 | 原本第3シートを使った単月／月別シート／期間合算、出力履歴、管理者限定 | 実装・自動検証済み |
 | 現行Excelレイアウト不変 | `assets/excel/order-details-template.xlsx`、`config/excel-template-map.json`、全出力シートの描画比較 | 原本第3シートで検証済み |
+| 共有URL・複数端末利用 | `render.yaml`、`0.0.0.0`待受、HTTPS Secure Cookie、`/healthz` | 実装済み・本番発行待ち |
+| 本番DB永続化 | Render Persistent Disk、`/var/data/wellnot/wellnot.sqlite`、WAL/FULL同期 | 実装済み・本番接続待ち |
+| Google Drive定期バックアップ | SQLiteオンラインバックアップ、Drive API、状態・手動実行API | 実装済み・認証情報設定待ち |
 | 全画面の編集導線 | 一覧・カレンダー・詳細・マスタ・Excelから、役割別の編集／工程編集／ロック管理へ遷移 | 実装済み |
 | 設計書・AI引継ぎ・変更履歴 | `docs/design`、`README_AI.md`、`CHANGELOG.md` | 作成済み |
 

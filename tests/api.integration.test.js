@@ -23,6 +23,7 @@ async function login(username,password){const response=await fetch(`${base}/api/
 async function request(path,{cookie,method='GET',value}={}){return fetch(`${base}${path}`,{method,headers:{cookie:cookie??'','content-type':'application/json'},body:value===undefined?undefined:JSON.stringify(value)});}
 
 test('管理者と従業員の機密情報をAPIで分離する',async()=>{
+  assert.deepEqual(await (await fetch(`${base}/healthz`)).json(),{ok:true});
   const admin=await login('admin','admin-test-pass');
   const worker=await login('worker','worker-test-pass');
   let response=await request('/api/masters/customers',{cookie:admin,method:'POST',value:{name:'架空客先'}});const customer=await response.json();
