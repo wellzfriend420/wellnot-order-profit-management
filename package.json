@@ -15,5 +15,8 @@
   },
   "devDependencies": {
     "playwright-core": "^1.61.1"
+  },
+  "dependencies": {
+    "exceljs": "^4.4.0"
   }
 }

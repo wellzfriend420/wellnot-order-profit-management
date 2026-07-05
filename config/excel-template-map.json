@@ -1,8 +1,16 @@
 {
-  "status": "awaiting_original_template",
-  "templateFile": null,
-  "sheetName": null,
+  "status": "approved",
+  "sourceFile": "受注工事明細表2026.5.18.xls",
+  "templateFile": "assets/excel/order-details-template.xlsx",
+  "sheetName": "受注工事 作成依頼分6.12",
   "dateBasis": "start_date",
-  "columnMap": {},
-  "notes": "現行受注工事明細の原本受領後に確定する。"
+  "rowsPerSheet": 31,
+  "columnMap": {
+    "customer_name": "A",
+    "construction_name": "B",
+    "start_date": "E (行頭)",
+    "due_date": "E (行頭+2)",
+    "budget_total": "F"
+  },
+  "notes": "原本の第3シートのみを有効見本とし、実データを除いた帳票テンプレートを使用する。"
 }

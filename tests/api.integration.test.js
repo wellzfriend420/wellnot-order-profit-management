@@ -4,6 +4,7 @@ import { spawn } from 'node:child_process';
 import { mkdirSync, rmSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { once } from 'node:events';
+import ExcelJS from 'exceljs';
 
 const port=32109;
 const base=`http://127.0.0.1:${port}`;
@@ -53,7 +54,17 @@ test('管理者と従業員の機密情報をAPIで分離する',async()=>{
   assert.equal((await request(`/api/projects/${project.id}/improvements`,{cookie:admin,method:'POST',value:{memo:'次回見積へ反映'}})).status,201);
   const exportResponse=await request('/api/exports/excel?start=2026-07-01&end=2026-09-30',{cookie:admin});
   assert.equal(exportResponse.status,200);
-  assert.match(await exportResponse.text(),/Worksheet ss:Name="2026-07"/);
+  assert.match(exportResponse.headers.get('content-type'),/spreadsheetml/);
+  const exportedWorkbook=new ExcelJS.Workbook();await exportedWorkbook.xlsx.load(Buffer.from(await exportResponse.arrayBuffer()));
+  assert.deepEqual(exportedWorkbook.worksheets.filter((sheet)=>sheet.state==='visible').map((sheet)=>sheet.name),['2026-07','2026-08','2026-09']);
+  assert.equal(exportedWorkbook.worksheets.length,3);
+  assert.equal(exportedWorkbook.getWorksheet('2026-07').getCell('A8').value,'架空客先（更新）');
+  assert.equal(exportedWorkbook.getWorksheet('2026-07').getCell('B8').value,'架空工事');
+  assert.equal(exportedWorkbook.getWorksheet('2026-07').getCell('E8').value,'R8.7');
+  assert.equal(exportedWorkbook.getWorksheet('2026-07').getCell('F8').value,1000);
+  assert.equal(exportedWorkbook.getWorksheet('2026-07').pageSetup.orientation,'landscape');
+  assert.equal(exportedWorkbook.getWorksheet('2026-07').pageSetup.printArea,'A1:W104');
+  assert.equal(exportedWorkbook.getWorksheet('2026-08').getCell('A8').value,null);
   assert.equal((await request('/api/exports/excel?start=2026-07-01&end=2026-09-30',{cookie:worker})).status,404);
   const history=await (await request('/api/exports/history',{cookie:admin})).json();
   assert.equal(history.history.length,1);
