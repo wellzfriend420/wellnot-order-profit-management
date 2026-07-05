@@ -25,6 +25,8 @@ test('管理者と従業員の機密情報をAPIで分離する',async()=>{
   const admin=await login('admin','admin-test-pass');
   const worker=await login('worker','worker-test-pass');
   let response=await request('/api/masters/customers',{cookie:admin,method:'POST',value:{name:'架空客先'}});const customer=await response.json();
+  assert.equal((await request(`/api/masters/customers/${customer.id}`,{cookie:worker,method:'PATCH',value:{name:'不正変更'}})).status,404);
+  assert.equal((await request(`/api/masters/customers/${customer.id}`,{cookie:admin,method:'PATCH',value:{name:'架空客先（更新）'}})).status,200);
   const masters=await (await request('/api/masters',{cookie:admin})).json();
   response=await request('/api/projects',{cookie:admin,method:'POST',value:{job_number:'TEST-001',customer_id:customer.id,construction_name:'架空工事',start_date:'2026-07-01',material_order_date:'2026-07-02',material_delivery_date:'2026-07-04',due_date:'2026-08-31',drawing_management:true,processes:masters.processes.slice(0,2).map((x)=>({process_master_id:x.id,planned_start_date:'2026-07-01',planned_end_date:'2026-07-03'}))}});assert.equal(response.status,201);const project=await response.json();
   assert.equal((await request(`/api/projects/${project.id}/budget-items`,{cookie:admin,method:'POST',value:{label:'見積',amount:1000}})).status,201);
