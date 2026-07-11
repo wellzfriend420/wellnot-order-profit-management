@@ -30,6 +30,12 @@ test('管理者と従業員の機密情報をAPIで分離する',async()=>{
   assert.equal((await request(`/api/masters/customers/${customer.id}`,{cookie:worker,method:'PATCH',value:{name:'不正変更'}})).status,404);
   assert.equal((await request(`/api/masters/customers/${customer.id}`,{cookie:admin,method:'PATCH',value:{name:'架空客先（更新）'}})).status,200);
   const masters=await (await request('/api/masters',{cookie:admin})).json();
+  response=await request('/api/projects',{cookie:admin,method:'POST',value:{job_number:'TEST-NO-PROC',customer_id:customer.id,construction_name:'工程未登録工事',start_date:'2026-10-01',due_date:'2026-10-10',drawing_management:false,processes:[]}});
+  assert.equal(response.status,201);
+  const noProcessProject=await response.json();
+  const calendar=await (await request('/api/calendar?start=2026-10-01&end=2026-10-31',{cookie:admin})).json();
+  assert.equal(calendar.bars.find((bar)=>bar.project_id===noProcessProject.id)?.process_name,'工程未登録');
+  assert.equal(calendar.bars.find((bar)=>bar.project_id===noProcessProject.id)?.is_placeholder,1);
   response=await request('/api/projects',{cookie:admin,method:'POST',value:{job_number:'TEST-001',customer_id:customer.id,construction_name:'架空工事',start_date:'2026-07-01',material_order_date:'2026-07-02',material_delivery_date:'2026-07-04',due_date:'2026-08-31',drawing_management:true,processes:masters.processes.slice(0,2).map((x)=>({process_master_id:x.id,planned_start_date:'2026-07-01',planned_end_date:'2026-07-03'}))}});assert.equal(response.status,201);const project=await response.json();
   assert.equal((await request(`/api/projects/${project.id}/budget-items`,{cookie:admin,method:'POST',value:{label:'見積',amount:1000}})).status,201);
   assert.equal((await request(`/api/projects/${project.id}/budget-items`,{cookie:worker,method:'POST',value:{label:'漏えい',amount:1}})).status,404);
