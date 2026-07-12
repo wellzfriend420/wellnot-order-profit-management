@@ -15,8 +15,13 @@ db.exec(readFileSync(resolve(root, 'src/infrastructure/schema.sql'), 'utf8'));
 const now = () => new Date().toISOString();
 const hasColumn = (table, column) => db.prepare(`PRAGMA table_info(${table})`).all().some((row) => row.name === column);
 if (!hasColumn('projects', 'short_name')) db.exec("ALTER TABLE projects ADD COLUMN short_name TEXT NOT NULL DEFAULT '';");
+if (!hasColumn('projects', 'contract_total_tax_included')) db.exec('ALTER TABLE projects ADD COLUMN contract_total_tax_included INTEGER NOT NULL DEFAULT 0;');
+if (!hasColumn('customers', 'closing_day')) db.exec('ALTER TABLE customers ADD COLUMN closing_day INTEGER NOT NULL DEFAULT 31;');
+if (!hasColumn('customers', 'payment_month_offset')) db.exec('ALTER TABLE customers ADD COLUMN payment_month_offset INTEGER NOT NULL DEFAULT 1;');
+if (!hasColumn('customers', 'payment_day')) db.exec('ALTER TABLE customers ADD COLUMN payment_day INTEGER NOT NULL DEFAULT 31;');
 if (!hasColumn('users', 'color')) db.exec("ALTER TABLE users ADD COLUMN color TEXT NOT NULL DEFAULT '#194f45';");
 if (!hasColumn('project_processes', 'assignee_user_id')) db.exec('ALTER TABLE project_processes ADD COLUMN assignee_user_id INTEGER REFERENCES users(id);');
+if (!hasColumn('project_processes', 'employee_id')) db.exec('ALTER TABLE project_processes ADD COLUMN employee_id INTEGER REFERENCES employee_masters(id);');
 const seedUser = (username, displayName, role, password) => {
   if (db.prepare('SELECT id FROM users WHERE username=?').get(username)) return;
   const value = hashPassword(password);
@@ -32,6 +37,11 @@ processNames.forEach(([name, abbreviation], index) => addProcess.run(name, abbre
 const cautions = ['黒板撮影必須','工程写真必須','完成写真必須','ミルシート提出','客先立会','その他'];
 const addCaution = db.prepare('INSERT OR IGNORE INTO caution_masters(name,sort_order) VALUES(?,?)');
 cautions.forEach((name, index) => addCaution.run(name, index + 1));
+const addEmployee = db.prepare('INSERT OR IGNORE INTO employee_masters(name,abbreviation,color,sort_order) VALUES(?,?,?,?)');
+[
+  ['管理者','管','#194f45'],
+  ['従業員','従','#2f6fa3']
+].forEach(([name, abbreviation, color], index) => addEmployee.run(name, abbreviation, color, index + 1));
 const estimateMasters = [
   ['労務費','現場労務費','h',0],['労務費','工場労務費','h',0],
   ['材料費','鋼材','式',0],['材料費','ボルト','式',0],['材料費','溶接材料','式',0],

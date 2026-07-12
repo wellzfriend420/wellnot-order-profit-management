@@ -12,7 +12,12 @@ CREATE TABLE IF NOT EXISTS sessions (
   token_hash TEXT PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id), expires_at TEXT NOT NULL, created_at TEXT NOT NULL
 );
 CREATE TABLE IF NOT EXISTS customers (
-  id INTEGER PRIMARY KEY, name TEXT NOT NULL UNIQUE, active INTEGER NOT NULL DEFAULT 1, sort_order INTEGER NOT NULL DEFAULT 0
+  id INTEGER PRIMARY KEY, name TEXT NOT NULL UNIQUE, active INTEGER NOT NULL DEFAULT 1, sort_order INTEGER NOT NULL DEFAULT 0,
+  closing_day INTEGER NOT NULL DEFAULT 31, payment_month_offset INTEGER NOT NULL DEFAULT 1, payment_day INTEGER NOT NULL DEFAULT 31
+);
+CREATE TABLE IF NOT EXISTS employee_masters (
+  id INTEGER PRIMARY KEY, name TEXT NOT NULL UNIQUE, abbreviation TEXT NOT NULL DEFAULT '',
+  color TEXT NOT NULL DEFAULT '#2f6fa3', active INTEGER NOT NULL DEFAULT 1, sort_order INTEGER NOT NULL DEFAULT 0
 );
 CREATE TABLE IF NOT EXISTS process_masters (
   id INTEGER PRIMARY KEY, name TEXT NOT NULL UNIQUE, abbreviation TEXT NOT NULL, active INTEGER NOT NULL DEFAULT 1, sort_order INTEGER NOT NULL
@@ -22,7 +27,8 @@ CREATE TABLE IF NOT EXISTS caution_masters (
 );
 CREATE TABLE IF NOT EXISTS projects (
   id INTEGER PRIMARY KEY, job_number TEXT NOT NULL UNIQUE, customer_id INTEGER NOT NULL REFERENCES customers(id),
-  construction_name TEXT NOT NULL, short_name TEXT NOT NULL DEFAULT '', start_date TEXT, material_order_date TEXT, material_delivery_date TEXT, due_date TEXT NOT NULL,
+  construction_name TEXT NOT NULL, short_name TEXT NOT NULL DEFAULT '', contract_total_tax_included INTEGER NOT NULL DEFAULT 0,
+  start_date TEXT, material_order_date TEXT, material_delivery_date TEXT, due_date TEXT NOT NULL,
   special_notes TEXT NOT NULL DEFAULT '', site_notes TEXT NOT NULL DEFAULT '', drawing_management INTEGER NOT NULL DEFAULT 0,
   status TEXT NOT NULL DEFAULT 'planned' CHECK(status IN ('planned','in_progress','completed')),
   locked_at TEXT, completed_at TEXT, deleted_at TEXT, version INTEGER NOT NULL DEFAULT 1,
@@ -38,7 +44,7 @@ CREATE TABLE IF NOT EXISTS project_cautions (
 CREATE TABLE IF NOT EXISTS project_processes (
   id INTEGER PRIMARY KEY, project_id INTEGER NOT NULL REFERENCES projects(id), process_master_id INTEGER NOT NULL REFERENCES process_masters(id),
   drawing_id INTEGER REFERENCES drawings(id), sequence INTEGER NOT NULL, planned_start_date TEXT, planned_end_date TEXT,
-  assignee_user_id INTEGER REFERENCES users(id),
+  assignee_user_id INTEGER REFERENCES users(id), employee_id INTEGER REFERENCES employee_masters(id),
   status TEXT NOT NULL DEFAULT 'not_started' CHECK(status IN ('not_started','in_progress','completed')),
   started_at TEXT, completed_at TEXT, version INTEGER NOT NULL DEFAULT 1, updated_by INTEGER NOT NULL REFERENCES users(id), updated_at TEXT NOT NULL,
   UNIQUE(project_id, sequence), CHECK(planned_end_date IS NULL OR planned_start_date IS NULL OR planned_end_date >= planned_start_date)
@@ -64,6 +70,13 @@ CREATE TABLE IF NOT EXISTS estimate_actual_items (
   actual_quantity REAL, actual_unit TEXT NOT NULL DEFAULT '', actual_unit_price REAL, actual_amount INTEGER NOT NULL DEFAULT 0,
   sort_order INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL, updated_at TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS billing_schedules (
+  id INTEGER PRIMARY KEY, project_id INTEGER NOT NULL REFERENCES projects(id),
+  label TEXT NOT NULL DEFAULT '請求予定', amount INTEGER NOT NULL DEFAULT 0,
+  billing_month TEXT NOT NULL, expected_payment_month TEXT NOT NULL,
+  auto_calculated INTEGER NOT NULL DEFAULT 1, sort_order INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL, updated_at TEXT NOT NULL
+);
 CREATE TABLE IF NOT EXISTS actual_costs (
   id INTEGER PRIMARY KEY, project_id INTEGER NOT NULL REFERENCES projects(id), category TEXT NOT NULL CHECK(category IN ('material','outsourcing')),
   label TEXT NOT NULL DEFAULT '', amount INTEGER NOT NULL DEFAULT 0, incurred_on TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL
@@ -80,6 +93,10 @@ CREATE TABLE IF NOT EXISTS export_history (
   id INTEGER PRIMARY KEY, export_type TEXT NOT NULL, period_start TEXT, period_end TEXT,
   exported_by INTEGER NOT NULL REFERENCES users(id), exported_at TEXT NOT NULL, parameters_json TEXT NOT NULL DEFAULT '{}'
 );
+CREATE TABLE IF NOT EXISTS backup_history (
+  id INTEGER PRIMARY KEY, provider TEXT NOT NULL DEFAULT 'google_drive', status TEXT NOT NULL,
+  file_id TEXT, error_message TEXT, executed_by INTEGER REFERENCES users(id), executed_at TEXT NOT NULL
+);
 CREATE TABLE IF NOT EXISTS audit_logs (
   id INTEGER PRIMARY KEY, actor_user_id INTEGER REFERENCES users(id), action TEXT NOT NULL, entity_type TEXT NOT NULL,
   entity_id TEXT, details_json TEXT NOT NULL DEFAULT '{}', created_at TEXT NOT NULL
@@ -89,3 +106,4 @@ CREATE INDEX IF NOT EXISTS idx_projects_status ON projects(status, deleted_at);
 CREATE INDEX IF NOT EXISTS idx_process_schedule ON project_processes(planned_start_date, planned_end_date);
 CREATE INDEX IF NOT EXISTS idx_audit_created ON audit_logs(created_at);
 CREATE INDEX IF NOT EXISTS idx_exports_created ON export_history(exported_at);
+CREATE INDEX IF NOT EXISTS idx_backup_created ON backup_history(executed_at);
