@@ -44,7 +44,6 @@ export function exportGrouping(start, end) {
 }
 
 export function employeeProject(project) {
-  const { budget_items, actual_costs, profit, confirmed_hours, ...safe } = project;
+  const { budget_items, actual_costs, estimate_actual_items, variance_by_category, profit, confirmed_hours, ...safe } = project;
   return safe;
 }
-

@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS users (
   id INTEGER PRIMARY KEY, username TEXT NOT NULL UNIQUE, display_name TEXT NOT NULL,
   password_hash TEXT NOT NULL, password_salt TEXT NOT NULL,
   role TEXT NOT NULL CHECK(role IN ('employee','admin')), active INTEGER NOT NULL DEFAULT 1,
+  color TEXT NOT NULL DEFAULT '#194f45',
   created_at TEXT NOT NULL, updated_at TEXT NOT NULL
 );
 CREATE TABLE IF NOT EXISTS sessions (
@@ -21,7 +22,7 @@ CREATE TABLE IF NOT EXISTS caution_masters (
 );
 CREATE TABLE IF NOT EXISTS projects (
   id INTEGER PRIMARY KEY, job_number TEXT NOT NULL UNIQUE, customer_id INTEGER NOT NULL REFERENCES customers(id),
-  construction_name TEXT NOT NULL, start_date TEXT, material_order_date TEXT, material_delivery_date TEXT, due_date TEXT NOT NULL,
+  construction_name TEXT NOT NULL, short_name TEXT NOT NULL DEFAULT '', start_date TEXT, material_order_date TEXT, material_delivery_date TEXT, due_date TEXT NOT NULL,
   special_notes TEXT NOT NULL DEFAULT '', site_notes TEXT NOT NULL DEFAULT '', drawing_management INTEGER NOT NULL DEFAULT 0,
   status TEXT NOT NULL DEFAULT 'planned' CHECK(status IN ('planned','in_progress','completed')),
   locked_at TEXT, completed_at TEXT, deleted_at TEXT, version INTEGER NOT NULL DEFAULT 1,
@@ -37,6 +38,7 @@ CREATE TABLE IF NOT EXISTS project_cautions (
 CREATE TABLE IF NOT EXISTS project_processes (
   id INTEGER PRIMARY KEY, project_id INTEGER NOT NULL REFERENCES projects(id), process_master_id INTEGER NOT NULL REFERENCES process_masters(id),
   drawing_id INTEGER REFERENCES drawings(id), sequence INTEGER NOT NULL, planned_start_date TEXT, planned_end_date TEXT,
+  assignee_user_id INTEGER REFERENCES users(id),
   status TEXT NOT NULL DEFAULT 'not_started' CHECK(status IN ('not_started','in_progress','completed')),
   started_at TEXT, completed_at TEXT, version INTEGER NOT NULL DEFAULT 1, updated_by INTEGER NOT NULL REFERENCES users(id), updated_at TEXT NOT NULL,
   UNIQUE(project_id, sequence), CHECK(planned_end_date IS NULL OR planned_start_date IS NULL OR planned_end_date >= planned_start_date)
@@ -48,6 +50,18 @@ CREATE TABLE IF NOT EXISTS work_memos (
 );
 CREATE TABLE IF NOT EXISTS budget_items (
   id INTEGER PRIMARY KEY, project_id INTEGER NOT NULL REFERENCES projects(id), label TEXT NOT NULL, amount INTEGER NOT NULL DEFAULT 0,
+  sort_order INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL, updated_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS estimate_item_masters (
+  id INTEGER PRIMARY KEY, category TEXT NOT NULL, name TEXT NOT NULL, unit TEXT NOT NULL DEFAULT '',
+  standard_unit_price REAL NOT NULL DEFAULT 0, active INTEGER NOT NULL DEFAULT 1, sort_order INTEGER NOT NULL DEFAULT 0,
+  UNIQUE(category, name)
+);
+CREATE TABLE IF NOT EXISTS estimate_actual_items (
+  id INTEGER PRIMARY KEY, project_id INTEGER NOT NULL REFERENCES projects(id), master_id INTEGER REFERENCES estimate_item_masters(id),
+  category TEXT NOT NULL, label TEXT NOT NULL, budget_quantity REAL, budget_unit TEXT NOT NULL DEFAULT '',
+  budget_unit_price REAL, budget_amount INTEGER NOT NULL DEFAULT 0,
+  actual_quantity REAL, actual_unit TEXT NOT NULL DEFAULT '', actual_unit_price REAL, actual_amount INTEGER NOT NULL DEFAULT 0,
   sort_order INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL, updated_at TEXT NOT NULL
 );
 CREATE TABLE IF NOT EXISTS actual_costs (
@@ -75,4 +89,3 @@ CREATE INDEX IF NOT EXISTS idx_projects_status ON projects(status, deleted_at);
 CREATE INDEX IF NOT EXISTS idx_process_schedule ON project_processes(planned_start_date, planned_end_date);
 CREATE INDEX IF NOT EXISTS idx_audit_created ON audit_logs(created_at);
 CREATE INDEX IF NOT EXISTS idx_exports_created ON export_history(exported_at);
-
