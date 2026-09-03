@@ -1,0 +1,43 @@
+name: wfs-wellnot
+
+services:
+  app:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    image: wfs/wellnot-order-profit-management:local
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_PATH: /var/lib/wellnot/wellnot.sqlite
+    ports:
+      - "127.0.0.1:${WELLNOT_BIND_PORT:-3300}:3000"
+    volumes:
+      - wellnot_data:/var/lib/wellnot
+      - /var/backups/wfs/wellnot:/var/backups/wellnot
+    networks:
+      - wellnot_internal
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/healthz').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp:size=128m,mode=1777
+
+networks:
+  wellnot_internal:
+
+volumes:
+  wellnot_data:

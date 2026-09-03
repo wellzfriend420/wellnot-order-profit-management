@@ -8,3 +8,5 @@ coverage/
 .test-data/
 tmp/
 output/
+providers/vps/.env
+*.sqlite-*

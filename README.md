@@ -22,11 +22,13 @@ Node.js 22.16以上で `npm start` を実行し、`http://localhost:3000` を開
 
 ## 本番運用
 
-本番はlocalhostではなく、Renderから発行されるHTTPS共有URLをPC・スマホ・タブレットのブラウザーで開いて利用します。利用端末へのインストールやcloneは不要です。
+現行本番はRenderで稼働しています。XServer VPSへの移行後は、専用Docker Compose Project、専用SQLite Volume、共通CaddyによるHTTPS公開へ切り替えます。利用端末へのインストールやcloneは不要です。
 
 本番DBはRender Persistent Diskの `/var/data/wellnot/wellnot.sqlite` に保存します。通常の一時ファイル領域へDBを置く構成では起動しません。サービスはSQLite保護のため1インスタンス固定です。
 
 Google Driveバックアップを設定すると、アプリがSQLiteの整合性を保ったコピーを24時間ごとに指定フォルダーへ保存します。詳しい初回配備、環境変数、バックアップ、復旧手順は [本番デプロイ手順](docs/operations/production-deployment.md) を参照してください。
+
+VPS構成と移行・復旧手順は [XServer VPS本番構成](docs/operations/vps-deployment.md) を正本とします。Render構成は切替完了までの現行環境および短期ロールバック用として扱います。
 
 ## 構成
 
@@ -37,6 +39,7 @@ Google Driveバックアップを設定すると、アプリがSQLiteの整合�
 - `docs`: WFS設計正本
 - `tests`: 自動テスト
 - `render.yaml`: 共有URL・永続ディスクを含む本番配備定義
+- `Dockerfile`, `providers/vps/`: XServer VPS向けコンテナ、バックアップ、復旧定義
 
 ## Excel原本
 

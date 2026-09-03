@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 2026-09-04 XServer VPS移行準備
+
+- 専用Docker Compose Project、SQLite Volume、内部ネットワーク、ヘルスチェック、自動再起動、ログローテーションを追加
+- SQLite online backup APIを使うVPS内日次バックアップと、明示承認を要求する復旧手順を追加
+- WFS共通Caddyおよび外部バックアップへ接続できるXServer VPS運用手順を追加
+
 ## [0.1.0] - 2026-07-05
 
 - WFS Candidateとして新規構築を開始。
